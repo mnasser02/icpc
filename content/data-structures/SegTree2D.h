@@ -1,7 +1,7 @@
 /**
  * Author: Mahdi Nasser
- * Description: 
- * Time: 
+ * Description:
+ * Time:
  */
 
 template <class T>
@@ -66,27 +66,6 @@ struct SegTree2D {
         return merge(ra, rb);
     }
 
-    /*T query_y(int px, int py, int ly, int ry, int i2, int j2) {
-        if (i2 <= ly && ry <= j2) {
-            return tree[px][py];
-        }
-        if (ry < i2 || ly > j2) {
-            return e;
-        }
-        int my = ly + ry >> 1;
-        return merge(query_y(px, py << 1, ly, my, i2, j2), query_y(px, py << 1 | 1, my + 1, ry, i2, j2));
-    }
-    T query_x(int px, int lx, int rx, int i1, int j1, int i2, int j2) {
-        if (i1 <= lx && rx <= j1) {
-            return query_y(px, 1, 0, m - 1, i2, j2);
-        }
-        if (rx < i1 || lx > j1) {
-            return e;
-        }
-        int mx = lx + rx >> 1;
-        return merge(query_x(px << 1, lx, mx, i1, j1, i2, j2), query_x(px << 1 | 1, mx + 1, rx, i1, j1, i2, j2));
-    }*/
-
     void update_y(int px, int lx, int rx, int py, int ly, int ry, int x, int y, int v) {
         if (ly == ry) {
             if (lx == rx) {
@@ -114,6 +93,5 @@ struct SegTree2D {
         update_y(px, lx, rx, 1, 0, n - 1, x, y, v);
     }
 
-    // T query(int x1, int x2, int y1, int y2) { return query_x(1, 0, n - 1, x1, x2, y1, y2); }
     void update(int x, int y, T v) { update_x(1, 0, n - 1, x, y, v); }
 };

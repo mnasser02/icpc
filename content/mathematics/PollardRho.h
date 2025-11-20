@@ -1,9 +1,10 @@
 /**
  * Author: Mahdi Nasser
- * Description: 
- * Time: 
+ * Description:
+ * Time: O(n^{1/4}\log(n)) usually
  */
 
+ll mult(ll a, ll b, ll mod) { return (__int128)a * b % mod; }
 ll rho(ll n, ll c) {
     ll x = 2, y = 2, i = 1, k = 2, d;
     while (true) {
@@ -15,9 +16,8 @@ ll rho(ll n, ll c) {
     }
     return n;
 }
-void pollard_rho(ll n, vll& f) {  // O(n^1/4)
-    if (n == 1)
-        return;
+void pollard_rho(ll n, vll& f) {
+    if (n == 1) return;
 
     if (is_prime(n)) {
         f.push_back(n);

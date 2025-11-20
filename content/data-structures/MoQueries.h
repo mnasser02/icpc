@@ -1,16 +1,16 @@
 /**
  * Author: Mahdi Nasser
- * Description: 
- * Time: 
+ * Description:
+ * Time: O(n\sqrt{q})
  */
 
 const int S = 200;
 struct Mo {
-    const vi &A;
+    const vi& A;
     int L, R;
     int ans;
 
-    Mo(vi &A) : A(A), L(0), R(-1), ans(0) {}
+    Mo(vi& A) : A(A), L(0), R(-1), ans(0) {}
 
     int process(int l, int r) {
         while (R < r) insert(A[++R]);
@@ -19,10 +19,8 @@ struct Mo {
         while (L > l) insert(A[--L]);
         return ans;
     }
-    void insert(int x) {
-    }
-    void erase(int x) {
-    }
+    void insert(int x) {}
+    void erase(int x) {}
 };
 
 struct Query {
