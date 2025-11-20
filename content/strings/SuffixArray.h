@@ -1,41 +1,131 @@
 /**
- * Author: 罗穗骞, chilli
- * Date: 2019-04-11
- * License: Unknown
- * Source: Suffix array - a powerful tool for dealing with strings
- * (Chinese IOI National team training paper, 2009)
- * Description: Builds suffix array for a string.
- * \texttt{sa[i]} is the starting index of the suffix which
- * is $i$'th in the sorted suffix array.
- * The returned vector is of size $n+1$, and \texttt{sa[0] = n}.
- * The \texttt{lcp} array contains longest common prefixes for
- * neighbouring strings in the suffix array:
- * \texttt{lcp[i] = lcp(sa[i], sa[i-1])}, \texttt{lcp[0] = 0}.
- * The input string must not contain any nul chars.
- * Time: O(n \log n)
- * Status: stress-tested
+ * Author: Mahdi Nasser
+ * Description: 
+ * Time: 
  */
-#pragma once
 
 struct SuffixArray {
-	vi sa, lcp;
-	SuffixArray(string s, int lim=256) { // or vector<int>
-		s.push_back(0); int n = sz(s), k = 0, a, b;
-		vi x(all(s)), y(n), ws(max(n, lim));
-		sa = lcp = y, iota(all(sa), 0);
-		for (int j = 0, p = 0; p < n; j = max(1, j * 2), lim = p) {
-			p = j, iota(all(y), n - j);
-			rep(i,0,n) if (sa[i] >= j) y[p++] = sa[i] - j;
-			fill(all(ws), 0);
-			rep(i,0,n) ws[x[i]]++;
-			rep(i,1,lim) ws[i] += ws[i - 1];
-			for (int i = n; i--;) sa[--ws[x[y[i]]]] = y[i];
-			swap(x, y), p = 1, x[sa[0]] = 0;
-			rep(i,1,n) a = sa[i - 1], b = sa[i], x[b] =
-				(y[a] == y[b] && y[a + j] == y[b + j]) ? p - 1 : p++;
-		}
-		for (int i = 0, j; i < n - 1; lcp[x[i++]] = k)
-			for (k && k--, j = sa[x[i] - 1];
-					s[i + k] == s[j + k]; k++);
-	}
+    vi sa, lcp;
+    string s;
+    // vector<vi> C;
+
+    void build(string& s_) {
+        s = s_;
+        // C.clear();
+        sa = suffix_array_construction(s);
+        lcp = lcp_construction(s);
+    }
+
+    vi suffix_array_construction(string s) {
+        s += "$";
+        vi sorted_shifts = sort_cyclic_shifts(s);
+        sorted_shifts.erase(sorted_shifts.begin());
+        return sorted_shifts;
+    }
+
+    vi sort_cyclic_shifts(string& s) {
+        int n = s.size();
+        vi p(n), c(n), cnt(max(256, n), 0);
+        for (int i = 0; i < n; i++)
+            cnt[s[i]]++;
+        for (int i = 1; i < 256; i++)
+            cnt[i] += cnt[i - 1];
+        for (int i = 0; i < n; i++)
+            p[--cnt[s[i]]] = i;
+        c[p[0]] = 0;
+        int classes = 1;
+        for (int i = 1; i < n; i++) {
+            if (s[p[i]] != s[p[i - 1]])
+                classes++;
+            c[p[i]] = classes - 1;
+        }
+        vi pn(n), cn(n);
+        // C.push_back(c);
+        for (int h = 0; (1 << h) < n; ++h) {
+            for (int i = 0; i < n; i++) {
+                pn[i] = p[i] - (1 << h);
+                if (pn[i] < 0)
+                    pn[i] += n;
+            }
+            fill(cnt.begin(), cnt.begin() + classes, 0);
+            for (int i = 0; i < n; i++)
+                cnt[c[pn[i]]]++;
+            for (int i = 1; i < classes; i++)
+                cnt[i] += cnt[i - 1];
+            for (int i = n - 1; i >= 0; i--)
+                p[--cnt[c[pn[i]]]] = pn[i];
+            cn[p[0]] = 0;
+            classes = 1;
+            for (int i = 1; i < n; i++) {
+                ii cur = {c[p[i]], c[(p[i] + (1 << h)) % n]};
+                ii prev = {c[p[i - 1]], c[(p[i - 1] + (1 << h)) % n]};
+                if (cur != prev)
+                    ++classes;
+                cn[p[i]] = classes - 1;
+            }
+            swap(c, cn);
+            // C.push_back(c);
+        }
+
+        return p;
+    }
+
+    vi lcp_construction(string& s) {
+        int n = s.size();
+        vi rank(n, 0);
+        for (int i = 0; i < n; i++)
+            rank[sa[i]] = i;
+
+        int k = 0;
+        vi lcp(n - 1, 0);
+        for (int i = 0; i < n; i++) {
+            if (rank[i] == n - 1) {
+                k = 0;
+                continue;
+            }
+            int j = sa[rank[i] + 1];
+            while (i + k < n && j + k < n && s[i + k] == s[j + k])
+                k++;
+            lcp[rank[i]] = k;
+            if (k)
+                k--;
+        }
+        return lcp;
+    }
+
+    ii string_matching(string& p) {
+        int n = s.size();
+        int l = 0, r = n - 1;
+        int lb = n, ub = n;
+        while (l <= r) {
+            int m = l + r >> 1;
+            string sub = s.substr(sa[m], (int)p.size());
+            if (sub >= p) {
+                lb = m;
+                r = m - 1;
+            } else {
+                l = m + 1;
+            }
+        }
+        l = 0, r = n - 1;
+        while (l <= r) {
+            int m = l + r >> 1;
+            string sub = s.substr(sa[m], (int)p.size());
+            if (sub > p) {
+                ub = m;
+                r = m - 1;
+            } else {
+                l = m + 1;
+            }
+        }
+        return {lb, ub};
+    }
+
+    /*int compare(int i, int j, int l) {
+        int n = s.size(), k = lg2[l];
+        pair<int, int> a = {C[k][i], C[k][(i + l - (1 << k)) % n]};
+        pair<int, int> b = {C[k][j], C[k][(j + l - (1 << k)) % n]};
+        return a == b ? 0 : a < b ? -1
+                                  : 1;
+    }*/
 };

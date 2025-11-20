@@ -1,28 +1,35 @@
 /**
- * Author: Johan Sannemo
- * Date: 2016-12-15
- * License: CC0
- * Description: pi[x] computes the length of the longest prefix of s that ends at x,
- * other than s[0...x] itself (abacaba -> 0010123).
- * Can be used to find all occurrences of a string.
- * Time: O(n)
- * Status: Tested on kattis:stringmatching
+ * Author: Mahdi Nasser
+ * Description: 
+ * Time: 
  */
-#pragma once
 
-vi pi(const string& s) {
-	vi p(sz(s));
-	rep(i,1,sz(s)) {
-		int g = p[i-1];
-		while (g && s[i] != s[g]) g = p[g-1];
-		p[i] = g + (s[i] == s[g]);
-	}
-	return p;
+vi get_pi(const string& s) {
+    int n = s.size();
+    vi pi(n);
+
+    for (int i = 1; i < n; i++) {
+        int j = pi[i - 1];
+        while (j > 0 && s[i] != s[j]) {
+            j = pi[j - 1];
+        }
+        if (s[i] == s[j]) j++;
+        pi[i] = j;
+    }
+    return pi;
 }
-
-vi match(const string& s, const string& pat) {
-	vi p = pi(pat + '\0' + s), res;
-	rep(i,sz(p)-sz(s),sz(p))
-		if (p[i] == sz(pat)) res.push_back(i - 2 * sz(pat));
-	return res;
+int count_occurences(const string& T, const string& P) {
+    vi pi = get_pi(P);
+    int i = 0, j = 0, freq = 0;
+    while (i < T.size()) {
+        while (j > 0 && T[i] != P[j]) j = pi[j - 1];
+        if (T[i] == P[j])
+            j++;
+        i++;
+        if (j == P.size()) {
+            freq++;
+            j = pi[j - 1];
+        }
+    }
+    return freq;
 }

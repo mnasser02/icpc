@@ -1,85 +1,84 @@
 /**
- * Author: Simon Lindholm
- * Date: 2015-02-18
- * License: CC0
- * Source: marian's (TC) code
- * Description: Aho-Corasick automaton, used for multiple pattern matching.
- * Initialize with AhoCorasick ac(patterns); the automaton start node will be at index 0.
- * find(word) returns for each position the index of the longest word that ends there, or -1 if none.
- * findAll($-$, word) finds all words (up to $N \sqrt N$ many if no duplicate patterns)
- * that start at each position (shortest first).
- * Duplicate patterns are allowed; empty patterns are not.
- * To find the longest words that start at each position, reverse all input.
- * For large alphabets, split each symbol into chunks, with sentinel bits for symbol boundaries.
- * Time: construction takes $O(26N)$, where $N =$ sum of length of patterns.
- * find(x) is $O(N)$, where N = length of x. findAll is $O(NM)$.
- * Status: stress-tested
+ * Author: Mahdi Nasser
+ * Description: 
+ * Time: 
  */
-#pragma once
 
+// at step i, longest suffix of s ending at i
+// that is prefix of word in dict
+const int S = 26;
 struct AhoCorasick {
-	enum {alpha = 26, first = 'A'}; // change this!
-	struct Node {
-		// (nmatches is optional)
-		int back, next[alpha], start = -1, end = -1, nmatches = 0;
-		Node(int v) { memset(next, v, sizeof(next)); }
-	};
-	vector<Node> N;
-	vi backp;
-	void insert(string& s, int j) {
-		assert(!s.empty());
-		int n = 0;
-		for (char c : s) {
-			int& m = N[n].next[c - first];
-			if (m == -1) { n = m = sz(N); N.emplace_back(-1); }
-			else n = m;
-		}
-		if (N[n].end == -1) N[n].start = j;
-		backp.push_back(N[n].end);
-		N[n].end = j;
-		N[n].nmatches++;
-	}
-	AhoCorasick(vector<string>& pat) : N(1, -1) {
-		rep(i,0,sz(pat)) insert(pat[i], i);
-		N[0].back = sz(N);
-		N.emplace_back(0);
+    vector<vvector<int>> AL, end;
+    vector<array<int, S>> trie;
+    vector<int> fail, vis, ans;
+    int cnt = 1;
 
-		queue<int> q;
-		for (q.push(0); !q.empty(); q.pop()) {
-			int n = q.front(), prev = N[n].back;
-			rep(i,0,alpha) {
-				int &ed = N[n].next[i], y = N[prev].next[i];
-				if (ed == -1) ed = y;
-				else {
-					N[ed].back = y;
-					(N[ed].end == -1 ? N[ed].end : backp[N[ed].start])
-						= N[y].end;
-					N[ed].nmatches += N[y].nmatches;
-					q.push(ed);
-				}
-			}
-		}
-	}
-	vi find(string word) {
-		int n = 0;
-		vi res; // ll count = 0;
-		for (char c : word) {
-			n = N[n].next[c - first];
-			res.push_back(N[n].end);
-			// count += N[n].nmatches;
-		}
-		return res;
-	}
-	vector<vi> findAll(vector<string>& pat, string word) {
-		vi r = find(word);
-		vector<vi> res(sz(word));
-		rep(i,0,sz(word)) {
-			int ind = r[i];
-			while (ind != -1) {
-				res[i - sz(pat[ind]) + 1].push_back(ind);
-				ind = backp[ind];
-			}
-		}
-		return res;
-	}
+    AhoCorasick() : trie(2), end(2) {}
+    void add(int i, string& s) {
+        int u = 1;
+        for (char cc : s) {
+            int c = cc - 'a';
+            if (!trie[u][c]) {
+                trie[u][c] = ++cnt;
+                trie.push_back({});
+                end.push_back({});
+            }
+            u = trie[u][c];
+        }
+        end[u].push_back(i);
+        ans.push_back(0);
+    }
+    // build after adding all patterns
+    void build() {
+        fail.resize(cnt + 1), AL.resize(cnt + 1);
+        queue<int> q;
+
+        for (int c = 0; c < S; c++) {
+            if (trie[1][c]) {
+                fail[trie[1][c]] = 1;
+                q.push(trie[1][c]);
+            } else {
+                trie[1][c] = 1;
+            }
+        }
+
+        while (!q.empty()) {
+            int u = q.front();
+            q.pop();
+            for (int c = 0; c < 26; c++) {
+                if (trie[u][c]) {
+                    fail[trie[u][c]] = trie[fail[u]][c];
+                    q.push(trie[u][c]);
+                } else {
+                    // failure built-in trie
+                    trie[u][c] = trie[fail[u]][c];
+                }
+            }
+        }
+
+        // exit links reversed, proper suffix -> string
+        for (int u = 2; u <= cnt; u++) {
+            AL[fail[u]].push_back(u);
+        }
+    }
+
+    void search(string& s) {
+        vis.assign(cnt + 1, 0);
+        int u = 1;
+        for (char cc : s) {
+            int c = cc - 'a';
+            u = trie[u][c];
+            vis[u] = 1;
+        }
+    }
+
+    // handle exit links
+    int dfs(int u) {
+        int res = vis[u];
+        for (int v : AL[u]) {
+            res += dfs(v);
+        }
+        for (int i : end[u]) ans[i] = res;
+        return res;
+    }
 };
