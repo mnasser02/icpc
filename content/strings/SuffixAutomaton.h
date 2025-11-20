@@ -1,7 +1,7 @@
 /**
  * Author: Mahdi Nasser
- * Description: 
- * Time: 
+ * Description:
+ * Time:
  */
 
 /**
@@ -12,18 +12,14 @@
  *     - 2 non-empty strings u, w with len(u) <= len(w)
  *         + are endpos-equiv iff u occurs in S only as a suffix of w
  *         + endpos(w) \subseteq endpos(u) if u suffix of w else they're disjoint
- *     - in an equiv class (state v), shorter substrings are suffixes of longer ones and take all possible lengths in some [minlen(v), len(v)]
- * v state, w = longest(v), link(v) = longest suffix of w in another equiv class
+ *     - in an equiv class (state v), shorter substrings are suffixes of longer ones and take all possible lengths in
+ * some [minlen(v), len(v)] v state, w = longest(v), link(v) = longest suffix of w in another equiv class
  *     - suffix links form a tree with root t0, with inclusion relationship b/w sets of endpos
  *     - minlen(v) = len(link(v)) + 1
  *     - v -> t0 seq of disjoint intervals, in union [0, len(v)]
  * a substring corresponds to a path from t0 and vice versa
  *
  **/
-
-#include <bits/stdc++.h>
-using namespace std;
-typedef long long ll;
 
 const int K = 26;
 const char C = 'a';
@@ -57,12 +53,10 @@ struct SuffixAuto {
         }
 
         vector<pair<int, int>> v(2 * S.size());
-        for (int i = 0; i < v.size(); i++)
-            v[i] = {st[i].len, i};
+        for (int i = 0; i < v.size(); i++) v[i] = {st[i].len, i};
         sort(v.rbegin(), v.rend());
         for (auto [len, id] : v)
-            if (st[id].link != -1)
-                cnt[st[id].link] += cnt[id];
+            if (st[id].link != -1) cnt[st[id].link] += cnt[id];
         cnt[0] = 1;
     }
 
@@ -157,12 +151,10 @@ struct SuffixAuto {
 
     vector<ll> dp;
     ll dfs_dp(int u) {
-        if (dp[u] != 0)
-            return dp[u];
+        if (dp[u] != 0) return dp[u];
         for (int c = 0; c < K; c++) {
             int v = st[u].next[c];
-            if (v != -1)
-                dp[u] += dfs_dp(v);
+            if (v != -1) dp[u] += dfs_dp(v);
         }
         return ++dp[u];  // *if not-distinct: dp += cnt*
     }
